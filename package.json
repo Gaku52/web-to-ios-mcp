@@ -1,0 +1,43 @@
+{
+  "name": "web-to-ios-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for converting web applications to iOS apps using Capacitor",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "web-to-ios-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "tsc && node dist/index.js",
+    "test": "echo \"Tests coming soon\"",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "ios",
+    "capacitor",
+    "vite",
+    "nextjs",
+    "react",
+    "mobile",
+    "conversion"
+  ],
+  "author": "Gaku52",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gaku52/web-to-ios-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

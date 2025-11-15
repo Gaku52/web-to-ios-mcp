@@ -44,6 +44,32 @@ MCP server for converting web applications (Vite/Next.js/React) to iOS apps usin
 
 ## 使い方
 
+### MCPリソース
+
+このMCPサーバーは、以下のドキュメントをMCPリソースとして提供します。Claude Codeから直接アクセス可能です。
+
+#### `web-to-ios://guides/implementation`
+**Implementation Guide** - iOS移行の実装ガイド
+
+完全な実装ガイドを提供：
+- 実装前の問題整理とリスク管理
+- 設計原則（KISS、YAGNI、Fail Fast等）
+- パフォーマンス最適化のベストプラクティス
+- 品質チェックリスト
+- MVP（Minimum Viable Product）の定義
+
+#### `web-to-ios://guides/troubleshooting`
+**Common Issues & Solutions** - トラブルシューティングガイド
+
+よくある問題と解決策を網羅：
+- ビルドエラー（CocoaPods、Xcode署名等）
+- 実行時エラー（白い画面、ルーティング、環境変数）
+- Vite特有の問題（base設定、HMR等）
+- Next.js特有の問題（Static Export、画像最適化等）
+- Supabase連携の問題
+- UI/UX問題（Safe Area、ステータスバー、キーボード）
+- パフォーマンス問題
+
 ### MCPツール
 
 #### `detect_web_framework`
