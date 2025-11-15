@@ -1,0 +1,60 @@
+/**
+ * File utility functions
+ */
+import { promises as fs } from 'fs';
+import path from 'path';
+/**
+ * Safely read a file
+ * Returns null if file doesn't exist or is too large
+ */
+export async function safeReadFile(filePath, maxSize = 10 * 1024 * 1024 // 10MB
+) {
+    try {
+        await fs.access(filePath);
+        const stats = await fs.stat(filePath);
+        if (stats.size > maxSize) {
+            console.warn(`File too large: ${filePath} (${stats.size} bytes)`);
+            return null;
+        }
+        return await fs.readFile(filePath, 'utf-8');
+    }
+    catch (error) {
+        return null;
+    }
+}
+/**
+ * Check if file exists
+ */
+export async function fileExists(filePath) {
+    try {
+        await fs.access(filePath);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+/**
+ * Read and parse JSON file
+ */
+export async function readJsonFile(filePath) {
+    const content = await safeReadFile(filePath);
+    if (!content) {
+        return null;
+    }
+    try {
+        return JSON.parse(content);
+    }
+    catch (error) {
+        console.error(`Failed to parse JSON: ${filePath}`, error);
+        return null;
+    }
+}
+/**
+ * Read package.json from a project directory
+ */
+export async function readPackageJson(projectPath) {
+    const pkgPath = path.join(projectPath, 'package.json');
+    return readJsonFile(pkgPath);
+}
+//# sourceMappingURL=file.js.map
