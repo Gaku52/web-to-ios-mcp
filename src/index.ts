@@ -23,114 +23,34 @@ import { generateConfigTool } from './tools/generate-config.js';
 import { loadImplementationGuide, loadCommonIssues } from './resources/index.js';
 
 /**
- * Create and configure MCP server
+ * Web to iOS MCP Server
+ * Provides tools and resources for converting web applications to iOS apps using Capacitor
  */
-async function main() {
-  const server = new Server(
-    {
-      name: 'web-to-ios-mcp',
-      version: '0.1.0',
-    },
-    {
-      capabilities: {
-        tools: {},
-        resources: {},
+class WebToIosServer {
+  private server: Server;
+
+  constructor() {
+    this.server = new Server(
+      {
+        name: 'web-to-ios-mcp',
+        version: '0.1.0',
       },
-    }
-  );
+      {
+        capabilities: {
+          tools: {},
+          resources: {},
+        },
+      }
+    );
 
-  /**
-   * List available tools
-   */
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-      tools: [
-        {
-          name: 'detect_web_framework',
-          description:
-            'Detect the web framework used in a project (Vite, Next.js, CRA). Returns framework type, version, and build configuration.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              projectPath: {
-                type: 'string',
-                description: 'Absolute path to the web project directory',
-              },
-            },
-            required: ['projectPath'],
-          },
-        },
-        {
-          name: 'generate_ios_migration_spec',
-          description:
-            'Generate a detailed iOS migration specification document based on the detected framework.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              projectPath: {
-                type: 'string',
-                description: 'Absolute path to the web project directory',
-              },
-              appName: {
-                type: 'string',
-                description: 'Name of the iOS app (e.g., "Spark Vault")',
-              },
-              bundleId: {
-                type: 'string',
-                description:
-                  'Bundle identifier (e.g., "com.ogadix.sparkvault")',
-              },
-              primaryColor: {
-                type: 'string',
-                description:
-                  'Optional: Primary color in hex format (e.g., "#8b5cf6")',
-              },
-            },
-            required: ['projectPath', 'appName', 'bundleId'],
-          },
-        },
-        {
-          name: 'generate_capacitor_config',
-          description:
-            'Generate a Capacitor configuration file (capacitor.config.ts) optimized for the detected framework.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              appName: {
-                type: 'string',
-                description: 'Name of the app',
-              },
-              appId: {
-                type: 'string',
-                description: 'Bundle identifier',
-              },
-              webDir: {
-                type: 'string',
-                description:
-                  'Build output directory (e.g., "dist", "out", "build")',
-              },
-              framework: {
-                type: 'string',
-                description: 'Framework type (vite, nextjs, cra)',
-                enum: ['vite', 'nextjs', 'cra'],
-              },
-              primaryColor: {
-                type: 'string',
-                description: 'Optional: Primary color in hex format',
-              },
-            },
-            required: ['appName', 'appId', 'webDir', 'framework'],
-          },
-        },
-      ],
-    };
-  });
+    this.setupHandlers();
+  }
 
-  /**
-   * List available resources
-   */
-  server.setRequestHandler(ListResourcesRequestSchema, async () => {
-    return {
+  private setupHandlers(): void {
+    /**
+     * List available resources
+     */
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
       resources: [
         {
           uri: 'web-to-ios://guides/implementation',
@@ -145,87 +65,176 @@ async function main() {
           mimeType: 'text/markdown',
         },
       ],
-    };
-  });
+    }));
 
-  /**
-   * Read resource content
-   */
-  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-    const uri = request.params.uri;
+    /**
+     * Read resource content
+     */
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const uri = request.params.uri;
 
-    switch (uri) {
-      case 'web-to-ios://guides/implementation':
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: 'text/markdown',
-              text: await loadImplementationGuide(),
-            },
-          ],
-        };
+      switch (uri) {
+        case 'web-to-ios://guides/implementation':
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'text/markdown',
+                text: await loadImplementationGuide(),
+              },
+            ],
+          };
 
-      case 'web-to-ios://guides/troubleshooting':
-        return {
-          contents: [
-            {
-              uri,
-              mimeType: 'text/markdown',
-              text: await loadCommonIssues(),
-            },
-          ],
-        };
-
-      default:
-        throw new Error(`Unknown resource: ${uri}`);
-    }
-  });
-
-  /**
-   * Handle tool calls
-   */
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-
-    try {
-      switch (name) {
-        case 'detect_web_framework':
-          return await detectFrameworkTool(args);
-
-        case 'generate_ios_migration_spec':
-          return await generateSpecTool(args);
-
-        case 'generate_capacitor_config':
-          return await generateConfigTool(args);
+        case 'web-to-ios://guides/troubleshooting':
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'text/markdown',
+                text: await loadCommonIssues(),
+              },
+            ],
+          };
 
         default:
-          throw new Error(`Unknown tool: ${name}`);
+          throw new Error(`Unknown resource: ${uri}`);
       }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+    });
+
+    /**
+     * List available tools
+     */
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
-        content: [
+        tools: [
           {
-            type: 'text',
-            text: `Error: ${errorMessage}`,
+            name: 'detect_web_framework',
+            description:
+              'Detect the web framework used in a project (Vite, Next.js, CRA). Returns framework type, version, and build configuration.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                projectPath: {
+                  type: 'string',
+                  description: 'Absolute path to the web project directory',
+                },
+              },
+              required: ['projectPath'],
+            },
+          },
+          {
+            name: 'generate_ios_migration_spec',
+            description:
+              'Generate a detailed iOS migration specification document based on the detected framework.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                projectPath: {
+                  type: 'string',
+                  description: 'Absolute path to the web project directory',
+                },
+                appName: {
+                  type: 'string',
+                  description: 'Name of the iOS app (e.g., "Spark Vault")',
+                },
+                bundleId: {
+                  type: 'string',
+                  description:
+                    'Bundle identifier (e.g., "com.ogadix.sparkvault")',
+                },
+                primaryColor: {
+                  type: 'string',
+                  description:
+                    'Optional: Primary color in hex format (e.g., "#8b5cf6")',
+                },
+              },
+              required: ['projectPath', 'appName', 'bundleId'],
+            },
+          },
+          {
+            name: 'generate_capacitor_config',
+            description:
+              'Generate a Capacitor configuration file (capacitor.config.ts) optimized for the detected framework.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                appName: {
+                  type: 'string',
+                  description: 'Name of the app',
+                },
+                appId: {
+                  type: 'string',
+                  description: 'Bundle identifier',
+                },
+                webDir: {
+                  type: 'string',
+                  description:
+                    'Build output directory (e.g., "dist", "out", "build")',
+                },
+                framework: {
+                  type: 'string',
+                  description: 'Framework type (vite, nextjs, cra)',
+                  enum: ['vite', 'nextjs', 'cra'],
+                },
+                primaryColor: {
+                  type: 'string',
+                  description: 'Optional: Primary color in hex format',
+                },
+              },
+              required: ['appName', 'appId', 'webDir', 'framework'],
+            },
           },
         ],
       };
-    }
-  });
+    });
 
-  /**
-   * Start server
-   */
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+    /**
+     * Handle tool calls
+     */
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
 
-  console.error('Web to iOS MCP server running on stdio');
+      try {
+        switch (name) {
+          case 'detect_web_framework':
+            return await detectFrameworkTool(args);
+
+          case 'generate_ios_migration_spec':
+            return await generateSpecTool(args);
+
+          case 'generate_capacitor_config':
+            return await generateConfigTool(args);
+
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Error: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    });
+  }
+
+  async start(): Promise<void> {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    console.error('Web to iOS MCP Server v0.1.0 started');
+    console.error('Convert your web apps to iOS apps with Capacitor');
+  }
 }
 
-main().catch((error) => {
-  console.error('Fatal error:', error);
+// サーバー起動
+const server = new WebToIosServer();
+server.start().catch((error) => {
+  console.error('Failed to start server:', error);
   process.exit(1);
 });
